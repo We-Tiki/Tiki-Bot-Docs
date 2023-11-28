@@ -1,0 +1,49 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!include DEVICONS/nodejs.puml
+!include DEVICONS/nodejs.puml
+!include DEVICONS/dotnet.puml
+!include DEVICONS/dotnet.puml
+!include DEVICONS/mongodb.puml
+
+AddRelTag("async", $lineStyle = DashedLine())
+LAYOUT_WITH_LEGEND()
+
+title "Company System"
+Person(company_admin, "Company Admin", "Company Admin")
+
+System_Boundary(Company, "Company System") {
+  Container(spa, "SPA", "NextJS", "Frontend for company admin", $sprite = "nodejs")
+  Container(api_gateway, "API Gateway", "Kong", "API Gateway")
+  Container(bot_config, "Bot config", "C# .NET", "Backend for bot configuration", $sprite = "dotnet")
+  Container(message_template, "Template messages", "Typescript", "Backend for chat template messages", $sprite = "nodejs")
+  Container(company, "company", "C# .NET", "Backend for company admin config and reports", $sprite = "dotnet")
+  Container(keycloack, "Keycloack", "Keycloack", "Authentication server")
+
+  ContainerDb(company_db, "Company database", "MongoDB", "Company database and reports", $sprite = "mongodb")
+
+  Rel(spa, api_gateway, "Uses", "HTTPS")
+  Rel(api_gateway, bot_config, "Uses", "HTTPS")
+  Rel(api_gateway, message_template, "Uses", "HTTPS")
+  Rel(api_gateway, company, "Uses", "HTTPS")
+  Rel(api_gateway, keycloack, "Uses", "HTTPS")
+
+  Rel(company, company_db, "Uses", "Mongosee")
+  System_Ext(collect, "OTEL", "OpenTelemetry Collector")
+}
+ 
+System_Ext(Bot_Core, "Company System", "Company System")
+System_Ext(apm, "APM", "Application Performance Monitoring")
+
+Rel(company_admin, spa, "Uses", "Inteface")
+Rel(bot_config, Bot_Core, "Uses", "RabbitMQ", $tags = "async")
+Rel(bot_config, collect, "Uses", "Tracing")
+Rel(message_template, Bot_Core, "Uses", "RabbitMQ", $tags = "async")
+Rel(message_template, collect, "Uses", "Tracing")
+Rel(Bot_Core, company, "Uses", "RabbitMQ", $tags = "async")
+Rel(company, collect, "Uses", "Tracing")
+Rel(collect, apm, "Uses", "Tracing")
+
+@enduml

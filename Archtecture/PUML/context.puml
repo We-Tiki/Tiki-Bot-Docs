@@ -22,7 +22,8 @@ Rel(company_attendant, meta_api, "Uses", "Send a message")
 Rel(meta_api, CoreBot, "Uses", "Webhook")
 Rel(Company, CoreBot, "Uses", "Events")
 Rel(company_admin, Company, "Uses", "HTTPS")
-Rel(CoreBot, apm, "Uses", "Tracing")
 Rel(CoreBot, collect, "Uses", "Tracing")
+Rel(Company, collect, "Uses", "Tracing")
+Rel(collect, apm, "Uses", "Tracing")
 
 @enduml

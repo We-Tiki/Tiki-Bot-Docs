@@ -1,0 +1,30 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+AddRelTag("async", $lineStyle = DashedLine())
+
+title "Webhook Component"
+Person(client, "Client", "Whatsapp Client")
+Person(company_attendant, "Company Attendant", "Company Attendant")
+
+Container_Boundary(Webhook, "Webhook container") {
+  Component(controller_webhook, "Controller Webhook", "ExpressJS", "Receives the webhook request from Meta API and sends to the company attendant")
+  Component(controller_verify, "Controller Verify", "ExpressJS", "Receives the webhook verification request from Meta API")
+
+  Component(receive_message_module, "Receive Message Module", "Typescript", "Receives the webhook request from Meta API and sends to the RabbitMQ")
+  
+  Rel(controller_webhook, receive_message_module, "Facade")
+}
+
+System_Ext(api_gateway, "API Gateway", "API Gateway")
+System_Ext(meta_api, "Meta API", "Meta API")
+System_Ext(apm, "APM", "Application Performance Monitoring")
+System_Ext(collect, "OTEL", "OpenTelemetry Collector")
+
+Rel(client, meta_api, "Send message", "Whatsapp message")
+Rel(company_attendant, meta_api, "Send message", "Whatsapp message")
+Rel(meta_api, api_gateway, "Uses", "HTTPS")
+
+Rel(api_gateway, controller_webhook, "Redirects", "HTTPS")
+Rel(api_gateway, controller_verify, "Redirects", "HTTPS")
+
+@enduml
