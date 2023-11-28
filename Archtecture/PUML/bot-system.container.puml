@@ -1,0 +1,55 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+AddRelTag("async", $lineStyle = DashedLine())
+
+title "Bot System"
+Person(client, "Client", "Whatsapp Client")
+Person(company_admin, "Company Admin", "Company Admin")
+Person(company_attendant, "Company Attendant", "Company Attendant")
+
+System_Boundary(Bot, "Bot System") {
+  Container(api_gateway, "API Gateway", "Kong", "API Gateway")
+  Container(webhook, "Webhook", "Typescript", "Webhook for Whatsapp messages")
+  Container(core_bot, "Core Bot", "Typescript", "Message processing")
+  Container(cronjob, "Cronjob", "Golang", "Cronjob for scheduled messages")
+  Container(message_acl, "Message ACL", "Typescript", "Message ACL")
+
+  ContainerDb(bot_config_db, "Bot Config", "MongoDB", "Bot configuration")
+  ContainerDb(template_db, "Template", "MongoDB", "Template configuration")
+  ContainerDb(chat_db, "Chat", "MongoDB", "Chat configuration")
+  ContainerDb(cronjob_db, "Cronjob", "MongoDB", "Cronjob configuration")
+  ContainerDb(outbox_db, "Outbox", "MongoDB", "Outbox database for messages unsent")
+
+  Rel(webhook, core_bot, "Uses", "RabbitMQ", $tags = "async")
+  Rel(cronjob, core_bot, "Uses", "RabbitMQ", $tags = "async")
+  Rel(core_bot, message_acl, "Uses", "RabbitMQ", $tags = "async")
+
+  Rel(core_bot, bot_config_db, "Uses", "Mongosee")
+  Rel(core_bot, template_db, "Uses", "Mongosee")
+  Rel(core_bot, chat_db, "Uses", "Mongosee")
+  Rel(cronjob, cronjob_db, "Uses", "Mongosee")
+  Rel(webhook, outbox_db, "Uses", "Mongosee")
+}
+ 
+System_Ext(Company, "Company System", "Company System")
+System_Ext(meta_api, "Meta API", "Meta API")
+System_Ext(apm, "APM", "Application Performance Monitoring")
+System_Ext(collect, "OTEL", "OpenTelemetry Collector")
+
+Rel(core_bot, collect, "Uses", "Tracing")
+Rel(api_gateway, collect, "Uses", "Tracing")
+Rel(webhook, collect, "Uses", "Tracing")
+Rel(cronjob, collect, "Uses", "Tracing")
+Rel(message_acl, collect, "Uses", "Tracing")
+Rel(collect, apm, "Uses", "Tracing")
+
+Rel(client, meta_api, "Uses", "Send a message")
+Rel(company_attendant, meta_api, "Uses", "Send a message")
+Rel(meta_api, api_gateway, "Uses", "Webhook")
+Rel(api_gateway, webhook, "Uses", "Redirect/HTTPS")
+Rel(Company, bot_config_db, "Uses", "Mongosee")
+Rel(Company, template_db, "Uses", "Mongosee")
+Rel(company_admin, Company, "Uses", "HTTPS")
+Rel(message_acl, meta_api, "Uses", "HTTPS")
+
+@enduml

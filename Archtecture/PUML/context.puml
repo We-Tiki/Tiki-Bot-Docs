@@ -1,0 +1,28 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title "Tiki Bot"
+Person(client, "Client", "Whatsapp Client")
+Person(company_admin, "Company Admin", "Company Admin")
+Person(company_attendant, "Company Attendant", "Company Attendant")
+
+System_Boundary(Bot, "Tiki Bot") {
+
+System(CoreBot, "Bot System", "Core for the Tiki bot")
+System(Company, "Company System", "Company System")
+
+}
+
+System_Ext(meta_api, "Meta API", "Meta API")
+System_Ext(apm, "APM", "Application Performance Monitoring")
+System_Ext(collect, "OTEL", "OpenTelemetry Collector")
+
+Rel(client, meta_api, "Uses", "Send a message")
+Rel(company_attendant, meta_api, "Uses", "Send a message")
+Rel(meta_api, CoreBot, "Uses", "Webhook")
+Rel(Company, CoreBot, "Uses", "Events")
+Rel(company_admin, Company, "Uses", "HTTPS")
+Rel(CoreBot, apm, "Uses", "Tracing")
+Rel(CoreBot, collect, "Uses", "Tracing")
+
+@enduml
